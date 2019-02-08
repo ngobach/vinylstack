@@ -1,0 +1,5 @@
+playlist:
+- url: https://example.com/mp3/song
+  title: Title
+  artist: Artist
+  cover: https://example.com/assets/cover.jpg
