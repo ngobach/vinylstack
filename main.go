@@ -18,12 +18,28 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Println("[*] Found playlists")
+	songsByID := map[string]song{}
 	for _, url := range playlistUrls {
 		pl, err := getPlaylist(url)
 		if err != nil {
 			fmt.Println(err.Error())
 			os.Exit(1)
 		}
-		pl.list = []song{}
+		for _, ss := range pl.list {
+			s, exists := songsByID[ss.id()]
+			if exists {
+				s.Genres = append(s.Genres, pl.title)
+			} else {
+				ss.Genres = append(ss.Genres, pl.title)
+				songsByID[ss.id()] = ss
+			}
+		}
 	}
+
+	songs := []song{}
+	for _, s := range songsByID {
+		songs = append(songs, s)
+	}
+
+	export("./output.json", songs)
 }

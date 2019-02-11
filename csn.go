@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"strconv"
@@ -10,14 +12,23 @@ import (
 )
 
 type song struct {
-	url    string
-	title  string
-	artist string
-	cover  string
+	Url    string   `json:"url"`
+	Title  string   `json:"title"`
+	Artist string   `json:"artist"`
+	Cover  string   `json:"cover"`
+	Genres []string `json:"genres"`
 }
+
 type playlist struct {
 	title string
 	list  []song
+}
+
+func (s *song) id() string {
+	h := md5.New()
+	h.Write([]byte(s.Title))
+	h.Write([]byte(s.Artist))
+	return hex.EncodeToString(h.Sum(nil))[:8]
 }
 
 func getPlaylistUrls(uid string) ([]string, error) {
@@ -50,23 +61,23 @@ func getPlaylist(url string) (playlist, error) {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		s.title = doc.Find(".card-details .card-title").Text()
-		s.artist = doc.Find(".card-details .list-unstyled li").First().Text()
-		s.artist = strings.TrimPrefix(s.artist, "Ca sĩ: ")
-		s.cover, _ = doc.Find(".card-details img").Attr("src")
-		if s.cover == "/imgs/no_cover.jpg" {
-			s.cover = ""
+		s.Title = doc.Find(".card-details .card-title").Text()
+		s.Artist = doc.Find(".card-details .list-unstyled li").First().Text()
+		s.Artist = strings.TrimPrefix(s.Artist, "Ca sĩ: ")
+		s.Cover, _ = doc.Find(".card-details img").Attr("src")
+		if s.Cover == "/imgs/no_cover.jpg" {
+			s.Cover = ""
 		}
 		// Print song info
 		doc.Find(".download_item").Each(func(idx int, el *goquery.Selection) {
 			if strings.Contains(el.Text(), "320") {
-				s.url, _ = el.Attr("href")
+				s.Url, _ = el.Attr("href")
 			}
 		})
-		fmt.Println("[+] Name:", s.title)
-		fmt.Println("[+] Artist:", s.artist)
-		fmt.Println("[+] Cover:", s.cover)
-		fmt.Println("[+] 320bps:", s.url)
+		fmt.Println("[+] Name:", s.Title)
+		fmt.Println("[+] Artist:", s.Artist)
+		fmt.Println("[+] Cover:", s.Cover)
+		fmt.Println("[+] 320bps:", s.Url)
 		pl.list = append(pl.list, s)
 	}
 	return pl, nil
