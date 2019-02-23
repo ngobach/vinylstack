@@ -12,7 +12,7 @@ import (
 )
 
 type song struct {
-	Url    string   `json:"url"`
+	URL    string   `json:"url"`
 	Title  string   `json:"title"`
 	Artist string   `json:"artist"`
 	Cover  string   `json:"cover"`
@@ -71,13 +71,13 @@ func getPlaylist(url string) (playlist, error) {
 		// Print song info
 		doc.Find(".download_item").Each(func(idx int, el *goquery.Selection) {
 			if strings.Contains(el.Text(), "320") {
-				s.Url, _ = el.Attr("href")
+				s.URL, _ = el.Attr("href")
 			}
 		})
 		fmt.Println("[+] Name:", s.Title)
 		fmt.Println("[+] Artist:", s.Artist)
 		fmt.Println("[+] Cover:", s.Cover)
-		fmt.Println("[+] 320bps:", s.Url)
+		fmt.Println("[+] 320bps:", s.URL)
 		pl.list = append(pl.list, s)
 	}
 	return pl, nil
