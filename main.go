@@ -7,6 +7,7 @@ import (
 
 func main() {
 	args := os.Args[1:]
+	// Check if argument is empty
 	if len(args) != 1 {
 		fmt.Println("You must provide one CSN User ID")
 		os.Exit(1)

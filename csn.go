@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -72,6 +73,8 @@ func getPlaylist(url string) (playlist, error) {
 		doc.Find(".download_item").Each(func(idx int, el *goquery.Selection) {
 			if strings.Contains(el.Text(), "320") {
 				s.URL, _ = el.Attr("href")
+				rg := regexp.MustCompile("(/downloads/\\d+/)\\d")
+				s.URL = rg.ReplaceAllString(s.URL, "$1%")
 			}
 		})
 		fmt.Println("[+] Name:", s.Title)
