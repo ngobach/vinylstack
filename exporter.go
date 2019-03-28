@@ -2,42 +2,85 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
 	"io/ioutil"
+	"net/http"
+	"net/url"
 	"os"
+	"path"
+	"strings"
 )
 
-const (
-	targetDir string = "dist"
-)
+type exporter struct {
+	target string
+}
 
-type exporter struct{}
-
-/**
- * Remove
- */
-func (exporter) prepare() error {
-	fi, err := os.Stat(targetDir)
+func (e *exporter) prepare() error {
+	_, err := os.Stat(e.target)
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
 	if err == nil {
 		// No error, should remove all
-		err := os.RemoveAll(targetDir)
+		err := os.RemoveAll(e.target)
 		if err != nil {
-			return err
+			panic(err)
 		}
 	}
-	err = os.Mkdir(targetDir, os.ModeDir)
+	err = os.Mkdir(e.target, os.ModePerm)
 	if err != nil {
 		return err
 	}
+	return nil
 }
 
-func export(file string, items []song) error {
-	encoded, err := json.Marshal(items)
+func getFileName(u string) string {
+	realurl, _ := url.PathUnescape(u)
+	tmp := strings.Split(realurl, "/")
+	return tmp[len(tmp)-1]
+}
+
+func (e *exporter) export(songs []song) error {
+	const workerCount = 8
+	ch := make(chan song)
+	done := make(chan song)
+	for i := 0; i < workerCount; i++ {
+		go func() {
+			for {
+				song, more := <-ch
+				if more {
+					filename := getFileName(song.URL)
+					resp, err := http.Get(song.URL)
+					if err != nil {
+						panic(err)
+					}
+					song.URL = filename
+					file, err := os.Create(path.Join(e.target, filename))
+					if err != nil {
+						panic(err)
+					}
+					io.Copy(file, resp.Body)
+					file.Close()
+					done <- song
+				} else {
+					break
+				}
+			}
+		}()
+	}
+	for _, song := range songs {
+		ch <- song
+	}
+	close(ch)
+	newList := make([]song, 0)
+	for range songs {
+		newList = append(newList, <-done)
+	}
+	encoded, err := json.Marshal(newList)
 	if err != nil {
 		return err
 	}
-	ioutil.WriteFile(file, encoded, 0644)
-	return nil
+	fmt.Println("Target file", path.Join(e.target, "index.json"))
+	return ioutil.WriteFile(path.Join(e.target, "index.json"), encoded, os.ModePerm)
 }

@@ -42,5 +42,10 @@ func main() {
 		songs = append(songs, s)
 	}
 
-	export("./output.json", songs)
+	e := exporter{"dist"}
+	e.prepare()
+	err = e.export(songs)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
