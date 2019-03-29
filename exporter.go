@@ -17,18 +17,16 @@ type exporter struct {
 }
 
 func (e *exporter) prepare() error {
-	_, err := os.Stat(e.target)
+	stat, err := os.Stat(e.target)
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
-	if err == nil {
-		// No error, should remove all
-		err := os.RemoveAll(e.target)
-		if err != nil {
-			panic(err)
-		}
+	if stat != nil && !stat.IsDir() {
+		return fmt.Errorf("%s is not a directory", e.target)
 	}
-	err = os.Mkdir(e.target, os.ModePerm)
+	if stat == nil {
+		err = os.Mkdir(e.target, os.ModePerm)
+	}
 	if err != nil {
 		return err
 	}
@@ -42,26 +40,33 @@ func getFileName(u string) string {
 }
 
 func (e *exporter) export(songs []song) error {
-	const workerCount = 8
+	const workerCount = 4
 	ch := make(chan song)
 	done := make(chan song)
+
 	for i := 0; i < workerCount; i++ {
 		go func() {
 			for {
 				song, more := <-ch
 				if more {
 					filename := getFileName(song.URL)
-					resp, err := http.Get(song.URL)
-					if err != nil {
-						panic(err)
-					}
 					song.URL = filename
-					file, err := os.Create(path.Join(e.target, filename))
-					if err != nil {
-						panic(err)
+					_, err := os.Stat(path.Join(e.target, filename))
+					if os.IsNotExist(err) {
+						fmt.Println("Downloading", filename)
+						resp, err := http.Get(song.URL)
+						if err != nil {
+							panic(err)
+						}
+						file, err := os.Create(path.Join(e.target, filename))
+						if err != nil {
+							panic(err)
+						}
+						io.Copy(file, resp.Body)
+						file.Close()
+					} else {
+						fmt.Println("Skip downloading", filename)
 					}
-					io.Copy(file, resp.Body)
-					file.Close()
 					done <- song
 				} else {
 					break
@@ -69,10 +74,12 @@ func (e *exporter) export(songs []song) error {
 			}
 		}()
 	}
-	for _, song := range songs {
-		ch <- song
-	}
-	close(ch)
+
+	go func() {
+		for _, song := range songs {
+			ch <- song
+		}
+	}()
 	newList := make([]song, 0)
 	for range songs {
 		newList = append(newList, <-done)
