@@ -43,14 +43,12 @@ func (e *exporter) export(songs []song) error {
 	const workerCount = 4
 	ch := make(chan song)
 	done := make(chan song)
-
 	for i := 0; i < workerCount; i++ {
 		go func() {
 			for {
 				song, more := <-ch
 				if more {
 					filename := getFileName(song.URL)
-					song.URL = filename
 					_, err := os.Stat(path.Join(e.target, filename))
 					if os.IsNotExist(err) {
 						fmt.Println("Downloading", filename)
@@ -67,6 +65,7 @@ func (e *exporter) export(songs []song) error {
 					} else {
 						fmt.Println("Skip downloading", filename)
 					}
+					song.URL = filename
 					done <- song
 				} else {
 					break
