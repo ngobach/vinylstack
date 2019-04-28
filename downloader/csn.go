@@ -101,10 +101,7 @@ func getPlaylist(url string) (core.Playlist, error) {
 
 	for i := 0; i < plSize; i++ {
 		s := <-fetched
-		fmt.Println("[+] Name:", s.Title)
-		fmt.Println("[+] Artist:", s.Artist)
-		fmt.Println("[+] Cover:", s.Cover)
-		fmt.Println("[+] 320bps:", s.URL)
+		fmt.Printf("-- %s (%s)\n", s.Title, s.Artist)
 		pl.List = append(pl.List, s)
 	}
 
