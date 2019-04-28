@@ -11,10 +11,12 @@ func Simplify(plls []Playlist) []Song {
 	m := map[string]Song{}
 	for _, playlist := range plls {
 		for _, song := range playlist.List {
-			if _, found := m[song.ID()]; !found {
-				m[song.ID()] = song
+			if _, found := m[song.ID()]; found {
+				// Use the existing one instead
+				song = m[song.ID()]
 			}
 			song.Genres = append(song.Genres, playlist.Title)
+			m[song.ID()] = song
 		}
 	}
 	songs := make([]Song, 0, len(m))
