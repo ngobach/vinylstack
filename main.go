@@ -43,10 +43,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	begin = time.Now()
 	err = exporter.DownloadAndExport(songs)
+	totalTime = time.Now().Sub(begin)
 	if err != nil {
 		panic(err)
 	}
-	color.Green("Finished downloading")
+	color.Green("Finished downloading (in %s)", totalTime.String())
 	color.White("Have fun!")
 }
