@@ -1,4 +1,4 @@
-package main
+package exporterz
 
 import (
 	"encoding/json"
@@ -12,11 +12,17 @@ import (
 	"strings"
 )
 
-type exporter struct {
+func filenameFromURL(u string) string {
+	realurl, _ := url.PathUnescape(u)
+	tmp := strings.Split(realurl, "/")
+	return tmp[len(tmp)-1]
+}
+
+type Exporter struct {
 	target string
 }
 
-func (e *exporter) prepare() error {
+func (e *Exporter) prepare() error {
 	stat, err := os.Stat(e.target)
 	if err != nil && !os.IsNotExist(err) {
 		return err
@@ -33,13 +39,7 @@ func (e *exporter) prepare() error {
 	return nil
 }
 
-func getFileName(u string) string {
-	realurl, _ := url.PathUnescape(u)
-	tmp := strings.Split(realurl, "/")
-	return tmp[len(tmp)-1]
-}
-
-func (e *exporter) export(songs []song) error {
+func (e *Exporter) export(songs []song) error {
 	const workerCount = 4
 	ch := make(chan song)
 	done := make(chan song)
