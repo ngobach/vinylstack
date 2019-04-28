@@ -38,7 +38,7 @@ func main() {
 	totalTime := time.Now().Sub(begin)
 	color.Green("Fetched %d playlists with %d songs (in %s)", len(playlists), len(songs), totalTime.String())
 	color.Blue("Start downloading")
-	exporter := exporter.Exporter{"_dist_"}
+	exporter := exporter.Exporter{Target: "_dist_"}
 	err = exporter.Prepare()
 	if err != nil {
 		panic(err)
