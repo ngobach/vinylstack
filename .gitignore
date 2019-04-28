@@ -1,2 +1,5 @@
 vendor/
 _dist_/
+# Built files
+vinylstack
+vinylstack.exe
