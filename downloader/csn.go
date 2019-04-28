@@ -2,7 +2,6 @@ package downloader
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 
@@ -76,14 +75,16 @@ func getPlaylist(url string) (core.Playlist, error) {
 					return
 				}
 				s := core.Song{}
-				doc, err := goquery.NewDocument("https://chiasenhac.vn" + url + "?playlist=" + strconv.Itoa(idx))
+				songURL := "https://chiasenhac.vn" + url + "?playlist=" + strconv.Itoa(idx)
+				doc, err := goquery.NewDocument(songURL)
 				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
+					panic(err)
 				}
 				s.Title = doc.Find(".card-details .card-title").Text()
-				s.Artist = doc.Find(".card-details .list-unstyled li").First().Text()
-				s.Artist = strings.TrimPrefix(s.Artist, "Ca sĩ: ")
+				if len(s.Title) == 0 {
+					panic(fmt.Errorf("Empty title while fetching %s", songURL))
+				}
+				s.Artist = strings.TrimPrefix(doc.Find(".card-details .list-unstyled li").First().Text(), "Ca sĩ: ")
 				s.Cover, _ = doc.Find(".card-details img").Attr("src")
 				if s.Cover == "/imgs/no_cover.jpg" {
 					s.Cover = ""
