@@ -35,7 +35,7 @@ func main() {
 		panic(err)
 	}
 	songs := core.Simplify(playlists)
-	totalTime := time.Now().Sub(begin)
+	totalTime := time.Since(begin)
 	color.Green("Fetched %d playlists with %d songs (in %s)", len(playlists), len(songs), totalTime.String())
 	color.Blue("Start downloading")
 	exporter := exporter.Exporter{Target: "_dist_"}
@@ -45,7 +45,7 @@ func main() {
 	}
 	begin = time.Now()
 	err = exporter.DownloadAndExport(songs)
-	totalTime = time.Now().Sub(begin)
+	totalTime = time.Since(begin)
 	if err != nil {
 		panic(err)
 	}
