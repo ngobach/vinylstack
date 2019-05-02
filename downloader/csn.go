@@ -9,7 +9,7 @@ import (
 	"github.com/thanbaiks/vinylstack/core"
 )
 
-const concurrentDownload = 16
+const concurrentDownload = 4
 
 // ChiaSeNhac downloader
 type ChiaSeNhac struct {
@@ -69,11 +69,7 @@ func getPlaylist(url string) (core.Playlist, error) {
 	close(ids)
 	for i := 0; i < concurrentDownload; i++ {
 		go func() {
-			for {
-				idx, found := <-ids
-				if !found {
-					return
-				}
+			for idx := range ids {
 				s := core.Song{}
 				songURL := "https://chiasenhac.vn" + url + "?playlist=" + strconv.Itoa(idx)
 				doc, err := goquery.NewDocument(songURL)

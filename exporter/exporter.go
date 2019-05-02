@@ -14,7 +14,7 @@ import (
 	"github.com/thanbaiks/vinylstack/core"
 )
 
-const concurrentDownload = 16
+const concurrentDownload = 4
 
 func filenameFromURL(u string) string {
 	realurl, _ := url.PathUnescape(u)
@@ -59,12 +59,7 @@ func (e *Exporter) DownloadAndExport(songs []core.Song) error {
 	songs = make([]core.Song, 0, count)
 	for i := 0; i < concurrentDownload; i++ {
 		go func() {
-			for {
-				song, more := <-inputs
-				if !more {
-					return
-				}
-				// fmt.Println("::", "Working on", song.Title)
+			for song := range inputs {
 				filename := filenameFromURL(song.URL)
 				_, err := os.Stat(path.Join(e.Target, filename))
 				if os.IsNotExist(err) {
