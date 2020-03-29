@@ -48,15 +48,15 @@ func (e *Exporter) Prepare() error {
 
 // DownloadAndExport download all related media to local disk.
 // It also export index.json file
-func (e *Exporter) DownloadAndExport(songs []core.Song) error {
+func (e *Exporter) DownloadAndExport(songs []core.Track) error {
 	count := len(songs)
-	inputs := make(chan core.Song, count)
-	done := make(chan core.Song)
+	inputs := make(chan core.Track, count)
+	done := make(chan core.Track)
 	for _, song := range songs {
 		inputs <- song
 	}
 	close(inputs)
-	songs = make([]core.Song, 0, count)
+	songs = make([]core.Track, 0, count)
 	for i := 0; i < concurrentDownload; i++ {
 		go func() {
 			for song := range inputs {

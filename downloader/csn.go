@@ -62,7 +62,7 @@ func getPlaylist(url string) (core.Playlist, error) {
 	fmt.Println("Scanning playlist", pl.Title)
 	plSize := doc.Find(".card-footer").Length()
 	ids := make(chan int, plSize)
-	fetched := make(chan core.Song)
+	fetched := make(chan core.Track)
 	for i := 1; i <= plSize; i++ {
 		ids <- i
 	}
@@ -70,7 +70,7 @@ func getPlaylist(url string) (core.Playlist, error) {
 	for i := 0; i < concurrentDownload; i++ {
 		go func() {
 			for idx := range ids {
-				s := core.Song{}
+				s := core.Track{}
 				songURL := "https://chiasenhac.vn" + url + "?playlist=" + strconv.Itoa(idx)
 				doc, err := goquery.NewDocument(songURL)
 				if err != nil {

@@ -1,15 +1,17 @@
 package core
 
 // Playlist describe a playlist
-type Playlist struct {
-	Title string
-	List  []Song
+type Genres struct {
+	ID     string
+	Name   string
+	Cover  *string
+	Tracks []*Track
 }
 
 // Simplify merge playlists into songs with appended genres
-func Simplify(plls []Playlist) []Song {
-	m := map[string]Song{}
-	for _, playlist := range plls {
+func Simplify(playlists []Playlist) []Track {
+	m := map[string]Track{}
+	for _, playlist := range playlists {
 		for _, song := range playlist.List {
 			if _, found := m[song.ID()]; found {
 				// Use the existing one instead
@@ -19,7 +21,7 @@ func Simplify(plls []Playlist) []Song {
 			m[song.ID()] = song
 		}
 	}
-	songs := make([]Song, 0, len(m))
+	songs := make([]Track, 0, len(m))
 	for _, song := range m {
 		songs = append(songs, song)
 	}
