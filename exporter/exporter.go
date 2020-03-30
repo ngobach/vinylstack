@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"sync"
 
 	"github.com/thanbaiks/vinylstack/core"
 )
@@ -55,10 +56,13 @@ func (e *Exporter) DownloadAndExport(store *core.Store) error {
 		inputs <- track.ID
 	}
 	close(inputs)
+	mtx := sync.Mutex{}
 	for i := 0; i < concurrentDownload; i++ {
 		go func() {
 			for id := range inputs {
+				mtx.Lock()
 				track := store.Tracks[id]
+				mtx.Unlock()
 				filename := filenameFromURL(track.URL)
 				_, err := os.Stat(path.Join(e.target, filename))
 				if os.IsNotExist(err) {
@@ -70,14 +74,22 @@ func (e *Exporter) DownloadAndExport(store *core.Store) error {
 					if err != nil {
 						panic(err)
 					}
-					io.Copy(file, resp.Body)
-					file.Close()
+					_, err = io.Copy(file, resp.Body)
+					if err != nil {
+						panic(err)
+					}
+					err = file.Close()
+					if err != nil {
+						panic(err)
+					}
 					fmt.Println("++", "Downloaded", filename)
 				} else {
 					fmt.Println("==", "Skipped", filename)
 				}
 				track.URL = filename
+				mtx.Lock()
 				store.Tracks[id] = track
+				mtx.Unlock()
 				done <- track
 			}
 		}()
