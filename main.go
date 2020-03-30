@@ -7,6 +7,7 @@ import (
 	"github.com/thanbaiks/vinylstack/downloader"
 	"github.com/thanbaiks/vinylstack/downloader/csn"
 	"github.com/thanbaiks/vinylstack/exporter"
+	"github.com/thanbaiks/vinylstack/patcher"
 	"time"
 )
 
@@ -45,6 +46,10 @@ func main() {
 			fmt.Printf("++ [Processed ][%s]: %s\n", item.Name(), *item.value)
 			core.DefaultStore.Dump()
 		}
+	}
+	pl := patcher.LoadPatchList("vinylstack.json")
+	if pl != nil {
+		pl.Patch(&core.DefaultStore)
 	}
 	exptr := exporter.NewExporter("_dist_")
 	MustSuccess(exptr.Prepare())
