@@ -1,5 +1,7 @@
 all: vinylstack
 
+.PHONY: vinylstack
+
 vinylstack:
 	go build .
 

@@ -1,7 +1,7 @@
 package core
 
 type Artist struct {
-	Id    string
-	Name  string
-	Cover *string
+	ID    ID      `json:"id"`
+	Name  string  `json:"name"`
+	Cover *string `json:"cover"`
 }

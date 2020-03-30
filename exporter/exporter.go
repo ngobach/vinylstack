@@ -17,28 +17,29 @@ import (
 const concurrentDownload = 4
 
 func filenameFromURL(u string) string {
-	realurl, _ := url.PathUnescape(u)
-	tmp := strings.Split(realurl, "/")
+	realURL, _ := url.PathUnescape(u)
+	tmp := strings.Split(realURL, "/")
 	return tmp[len(tmp)-1]
 }
 
-// Exporter download related files to local disk
 type Exporter struct {
-	// Target directory. Must be related to working directory
-	Target string
+	target string
 }
 
-// Prepare target directory to be exportable
+func NewExporter(target string) Exporter {
+	return Exporter{target}
+}
+
 func (e *Exporter) Prepare() error {
-	stat, err := os.Stat(e.Target)
+	stat, err := os.Stat(e.target)
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
 	if stat != nil && !stat.IsDir() {
-		return fmt.Errorf("%s is not a directory", e.Target)
+		return fmt.Errorf("%s is not a directory", e.target)
 	}
 	if stat == nil {
-		err = os.Mkdir(e.Target, os.ModePerm)
+		err = os.Mkdir(e.target, os.ModePerm)
 	}
 	if err != nil {
 		return err
@@ -46,28 +47,26 @@ func (e *Exporter) Prepare() error {
 	return nil
 }
 
-// DownloadAndExport download all related media to local disk.
-// It also export index.json file
-func (e *Exporter) DownloadAndExport(songs []core.Track) error {
-	count := len(songs)
-	inputs := make(chan core.Track, count)
+func (e *Exporter) DownloadAndExport(store *core.Store) error {
+	count := len(store.Tracks)
+	inputs := make(chan core.ID, count)
 	done := make(chan core.Track)
-	for _, song := range songs {
-		inputs <- song
+	for _, track := range store.Tracks {
+		inputs <- track.ID
 	}
 	close(inputs)
-	songs = make([]core.Track, 0, count)
 	for i := 0; i < concurrentDownload; i++ {
 		go func() {
-			for song := range inputs {
-				filename := filenameFromURL(song.URL)
-				_, err := os.Stat(path.Join(e.Target, filename))
+			for id := range inputs {
+				track := store.Tracks[id]
+				filename := filenameFromURL(track.URL)
+				_, err := os.Stat(path.Join(e.target, filename))
 				if os.IsNotExist(err) {
-					resp, err := http.Get(song.URL)
+					resp, err := http.Get(track.URL)
 					if err != nil {
 						panic(err)
 					}
-					file, err := os.Create(path.Join(e.Target, filename))
+					file, err := os.Create(path.Join(e.target, filename))
 					if err != nil {
 						panic(err)
 					}
@@ -77,20 +76,21 @@ func (e *Exporter) DownloadAndExport(songs []core.Track) error {
 				} else {
 					fmt.Println("==", "Skipped", filename)
 				}
-				song.URL = filename
-				done <- song
+				track.URL = filename
+				store.Tracks[id] = track
+				done <- track
 			}
 		}()
 	}
 
 	for i := 0; i < count; i++ {
-		songs = append(songs, <-done)
+		<-done
 	}
 
-	encoded, err := json.Marshal(songs)
+	encoded, err := json.Marshal(store)
 	if err != nil {
 		return err
 	}
 
-	return ioutil.WriteFile(path.Join(e.Target, "index.json"), encoded, os.ModePerm)
+	return ioutil.WriteFile(path.Join(e.target, "index.json"), encoded, os.ModePerm)
 }

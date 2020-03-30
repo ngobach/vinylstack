@@ -3,52 +3,55 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os"
-	"time"
-
 	"github.com/thanbaiks/vinylstack/core"
-	"github.com/thanbaiks/vinylstack/exporter"
-
-	"github.com/fatih/color"
 	"github.com/thanbaiks/vinylstack/downloader"
+	"github.com/thanbaiks/vinylstack/downloader/csn"
+	"github.com/thanbaiks/vinylstack/exporter"
+	"time"
 )
 
+type FactoryWithFlag struct {
+	downloader.Factory
+	value *string
+}
+
+func MustSuccess(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
 func main() {
-	csn := flag.String("csn", "", "ChiaSeNhac user ID")
-	var dld downloader.Downloader
+	startTime := time.Now()
+	registerFactories()
+	var list []FactoryWithFlag
+	for _, f := range downloader.Factories() {
+		value := flag.String(f.CommandPrefix(), "", f.CommandHelp())
+		list = append(list, FactoryWithFlag{
+			f,
+			value,
+		})
+		fmt.Printf("++ %s registered\n", f.Name())
+	}
 	flag.Parse()
-	switch {
-	case len(*csn) > 0:
-		dld = downloader.ChiaSeNhac{UserID: *csn}
+	for _, item := range list {
+		if len(*item.value) > 0 {
+			fmt.Printf("++ [Processing][%s]: %s\n", item.Name(), *item.value)
+			d := item.Create(*item.value)
+			err := d.Download(&core.DefaultStore)
+			if err != nil {
+				panic(err)
+			}
+			fmt.Printf("++ [Processed ][%s]: %s\n", item.Name(), *item.value)
+			core.DefaultStore.Dump()
+		}
 	}
+	exptr := exporter.NewExporter("_dist_")
+	MustSuccess(exptr.Prepare())
+	MustSuccess(exptr.DownloadAndExport(&core.DefaultStore))
+	fmt.Println("Job finished after", time.Since(startTime))
+}
 
-	if dld == nil {
-		flag.Usage()
-		os.Exit(1)
-	}
-	color.Blue("Downloading playlists with downloader")
-	fmt.Println(dld.Info())
-
-	begin := time.Now()
-	playlists, err := dld.Download()
-	if err != nil {
-		panic(err)
-	}
-	songs := core.Simplify(playlists)
-	totalTime := time.Since(begin)
-	color.Green("Fetched %d playlists with %d songs (in %s)", len(playlists), len(songs), totalTime.String())
-	color.Blue("Start downloading")
-	exporter := exporter.Exporter{Target: "_dist_"}
-	err = exporter.Prepare()
-	if err != nil {
-		panic(err)
-	}
-	begin = time.Now()
-	err = exporter.DownloadAndExport(songs)
-	totalTime = time.Since(begin)
-	if err != nil {
-		panic(err)
-	}
-	color.Green("Finished downloading (in %s)", totalTime.String())
-	color.White("Have fun!")
+func registerFactories() {
+	downloader.RegisterFactory(csn.ChiaSeNhacFactory{})
 }
