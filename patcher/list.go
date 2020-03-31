@@ -8,9 +8,10 @@ import (
 )
 
 type PatchList struct {
-	Genres  map[core.ID]core.Genre
-	Artists map[core.ID]core.Artist
-	Tracks  map[core.ID]core.Track
+	Genres       map[core.ID]core.Genre
+	Artists      map[core.ID]core.Artist
+	Tracks       map[core.ID]core.Track
+	DefaultCover *string `json:"default_cover,omitempty"`
 }
 
 func LoadPatchList(file string) *PatchList {
@@ -73,5 +74,8 @@ func (pl *PatchList) Patch(store *core.Store) {
 			}
 			store.Genres[id] = target
 		}
+	}
+	if len(*pl.DefaultCover) > 0 {
+		store.DefaultCover = pl.DefaultCover
 	}
 }

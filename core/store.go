@@ -3,9 +3,10 @@ package core
 import "fmt"
 
 type Store struct {
-	Genres  map[ID]Genre  `json:"genres"`
-	Artists map[ID]Artist `json:"artists"`
-	Tracks  map[ID]Track  `json:"tracks"`
+	Genres       map[ID]Genre  `json:"genres"`
+	Artists      map[ID]Artist `json:"artists"`
+	Tracks       map[ID]Track  `json:"tracks"`
+	DefaultCover *string       `json:"default_cover"`
 }
 
 var DefaultStore = Store{
