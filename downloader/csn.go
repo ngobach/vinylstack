@@ -2,6 +2,7 @@ package downloader
 
 import (
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 
@@ -40,13 +41,20 @@ func (csn ChiaSeNhac) Download() ([]core.Playlist, error) {
 }
 
 func getPlaylistUrls(uid string) ([]string, error) {
-	result := []string{}
-	doc, err := goquery.NewDocument("https://chiasenhac.vn/user/" + uid)
+	var result []string
+	req, err := http.NewRequest("GET", "https://chiasenhac.vn/user/"+uid, nil)
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Mobile Safari/537.36")
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-	doc.Find("#playlist .card").Each(func(idx int, el *goquery.Selection) {
-		href, _ := el.Find(".card-title>a").Attr("href")
+	resp, err := http.DefaultClient.Do(req)
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+	doc.Find(".block_profile_playlist .item > a").Each(func(idx int, el *goquery.Selection) {
+		href, _ := el.Attr("href")
 		result = append(result, href)
 	})
 	return result, nil
