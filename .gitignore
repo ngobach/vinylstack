@@ -3,3 +3,5 @@ _dist_/
 # Built files
 vinylstack
 vinylstack.exe
+.idea/
+*.iml
