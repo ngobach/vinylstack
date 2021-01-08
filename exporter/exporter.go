@@ -75,7 +75,7 @@ func (e *Exporter) DownloadAndExport(songs []core.Song) error {
 					file.Close()
 					fmt.Println("++", "Downloaded", filename)
 				} else {
-					fmt.Println("==", "Skipped", filename)
+					fmt.Println("==", "Skipped unknown error: "+err.Error(), filename)
 				}
 				song.URL = filename
 				done <- song
