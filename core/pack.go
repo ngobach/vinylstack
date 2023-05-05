@@ -85,11 +85,11 @@ func (p *Pack) ImportMp3File(filePath string) {
 		log.Println("Skipped copying", destMp3File)
 	}
 
-	if !isFileExist(destThumbnailFile) {
-		log.Println("Wrote", destThumbnailFile)
+	if metadata.Picture() != nil && !isFileExist(destThumbnailFile) {
 		if err = os.WriteFile(destThumbnailFile, metadata.Picture().Data, 0666); err != nil {
 			panic(err)
 		}
+		log.Println("Wrote", destThumbnailFile)
 	} else {
 		log.Println("Skipped writing", destThumbnailFile)
 	}
