@@ -94,11 +94,16 @@ func (p *Pack) ImportMp3File(filePath string) {
 		log.Println("Skipped writing", destThumbnailFile)
 	}
 
+	cover := strings.Replace(baseName, ".mp3", ".jpg", 1)
+	if !isFileExist(destThumbnailFile) {
+		cover = p.defaultCover
+	}
+
 	p.tracks = append(p.tracks, Track{
 		Title:  metadata.Title(),
 		Artist: metadata.Artist(),
 		URL:    baseName,
-		Cover:  strings.Replace(baseName, ".mp3", ".jpg", 1),
+		Cover:  cover,
 		Genres: []string{},
 	})
 }
