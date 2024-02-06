@@ -1,6 +1,6 @@
-default: vinylstack
+.PHONY: all clean
+all: vinylstack
 
-.PHONY: vinylstack
 vinylstack:
 	go build -ldflags "-s -w" ./cmd/vinylstack
 
